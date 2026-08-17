@@ -36,8 +36,8 @@ jobs:
 
       - name: Create package
         run: |
-          mkdir -p /tmp/package/common/addons/sourcemod/plugins
-          cp -R addons/sourcemod/plugins/*.smx /tmp/package/common/addons/sourcemod/plugins/
+          mkdir -p /tmp/package
+          cp -R addons/sourcemod/plugins/*.smx /tmp/package/
           cp -R addons/sourcemod/translations /tmp/package/common/addons/sourcemod/
           cp -R addons/sourcemod/configs /tmp/package/common/addons/sourcemod/
           cp -R sound /tmp/package/common/
