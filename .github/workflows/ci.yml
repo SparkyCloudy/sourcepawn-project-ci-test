@@ -14,9 +14,6 @@ on:
       - main
       - master
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: "Build"
@@ -35,12 +32,12 @@ jobs:
 
       - name: Build sourcemod plugin
         run: |
-          sourceknight build --report json
+          sourceknight build
 
       - name: Create package
         run: |
-          mkdir -p /tmp/package/common/addons/sourcemod/plugins
-          cp -R addons/sourcemod/plugins/*.smx /tmp/package/common/addons/sourcemod/plugins/
+          mkdir -p /tmp/package
+          cp -R addons/sourcemod/plugins/*.smx /tmp/package/
           cp -R addons/sourcemod/translations /tmp/package/common/addons/sourcemod/
           cp -R addons/sourcemod/configs /tmp/package/common/addons/sourcemod/
           cp -R sound /tmp/package/common/
@@ -50,13 +47,6 @@ jobs:
         with:
           name: package
           path: /tmp/package
-
-      - name: Upload Compile Report
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: compile-report
-          path: compile_report.json
 
   tag:
     name: Tag
