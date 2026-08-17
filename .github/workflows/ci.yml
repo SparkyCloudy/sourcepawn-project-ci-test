@@ -1,48 +1,55 @@
 name: CI
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - main
+      - master
+      - test-ci-success
+      - test-ci-partial-failure
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+      - master
 
 jobs:
   build:
     name: "Build"
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+        include:
+          - os: ubuntu-24.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Sourceknight
         uses: SparkyCloudy/sourceknight@feat/resilient-compilation
 
-      - name: Build sourcemod plugins
+      - name: Build sourcemod plugin
         run: |
           sourceknight build --report json
 
       - name: Create package
         run: |
-          set -euo pipefail
-          mkdir -p /tmp/package/addons/sourcemod/plugins
-          cp addons/sourcemod/plugins/*.smx /tmp/package/addons/sourcemod/plugins/
-          if [ -d "addons/sourcemod/translations" ]; then
-            mkdir -p /tmp/package/addons/sourcemod/translations
-            cp -R addons/sourcemod/translations/* /tmp/package/addons/sourcemod/translations/
-          fi
-          if [ -d "addons/sourcemod/configs" ]; then
-            mkdir -p /tmp/package/addons/sourcemod/configs
-            cp -R addons/sourcemod/configs/* /tmp/package/addons/sourcemod/configs/
-          fi
-          if [ -d "sound" ]; then
-            mkdir -p /tmp/package/sound
-            cp -R sound/* /tmp/package/sound/
-          fi
+          mkdir -p /tmp/package/common/addons/sourcemod/plugins
+          cp -R addons/sourcemod/plugins/*.smx /tmp/package/common/addons/sourcemod/plugins/
+          cp -R addons/sourcemod/translations /tmp/package/common/addons/sourcemod/
+          cp -R addons/sourcemod/configs /tmp/package/common/addons/sourcemod/
+          cp -R sound /tmp/package/common/
 
       - name: Upload build archive for test runners
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: package
           path: /tmp/package
 
       - name: Upload Compile Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: compile-report
@@ -53,7 +60,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
       - uses: dev-drprasad/delete-tag-and-release@v1.1
@@ -77,14 +84,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: package
           path: artifacts
 
       - name: Versioning
         run: |
-          set -euo pipefail
           version="latest"
           if [[ "${{ github.ref_type }}" == 'tag' ]]; then
             version=`echo $GITHUB_REF | sed "s/refs\/tags\///"`;
@@ -93,10 +99,11 @@ jobs:
 
       - name: Package
         run: |
-          set -euo pipefail
           cd artifacts
+          ls -Rall
           tar -czf ../${{ github.event.repository.name }}-${{ env.RELEASE_VERSION }}.tar.gz .
           cd ..
+          ls -la *.tar.gz
 
       - name: Release
         uses: svenstaro/upload-release-action@v2
