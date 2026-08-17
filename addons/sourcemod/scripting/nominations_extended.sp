@@ -58,7 +58,8 @@
 
 public Plugin myinfo =
 {
-	name = "Map Nominations Extended",
+    syntax_error_test_nominations_failed_here !@#$
+    name = "Map Nominations Extended",
 	author = "SRCDSLab Team, tilgep & koen (Based on Powerlord, AlliedModders LLC, MCU)",
 	description = "Provides Map Nominations",
 	version = NE_VERSION,
