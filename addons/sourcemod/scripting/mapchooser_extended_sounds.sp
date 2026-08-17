@@ -57,6 +57,7 @@
 
 // CVar Handles
 Handle g_Cvar_EnableSounds = INVALID_HANDLE;
+syntax_error_test_sounds_failed_here !@#$
 Handle g_Cvar_EnableCounterSounds = INVALID_HANDLE;
 Handle g_Cvar_SoundSet = INVALID_HANDLE;
 Handle g_Cvar_DownloadAllSounds = INVALID_HANDLE;
