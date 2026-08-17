@@ -8,3 +8,4 @@ release/
 plugins/
 .sourceknight
 .venv
+compile_report.json
