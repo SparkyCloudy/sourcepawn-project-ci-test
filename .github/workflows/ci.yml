@@ -4,55 +4,29 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: "Build"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+        include:
+          - os: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup SourcePawn compiler
-        uses: rumblefrog/setup-sp@v1.3.1
-        with:
-          version: "1.12.x"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install dependencies
-        run: |
-          set -euo pipefail
-          mkdir -p addons/sourcemod/scripting/include deps
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-MultiColors.git deps/multicolors
-          cp -R deps/multicolors/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-AFKManager.git deps/afkmanager
-          cp -R deps/afkmanager/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sourcebans-pp.git deps/sourcecomms
-          cp -R deps/sourcecomms/game/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-PlayerManager.git deps/playermanager
-          cp -R deps/playermanager/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-ZLeader.git deps/zleader
-          cp -R deps/zleader/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-DynamicChannels.git deps/dynamicchannels
-          cp -R deps/dynamicchannels/scripting/include/* addons/sourcemod/scripting/include/
-          git clone --depth=1 https://github.com/srcdslab/sm-plugin-UtilsHelper.git deps/utilshelper
-          cp -R deps/utilshelper/addons/sourcemod/scripting/include/* addons/sourcemod/scripting/include/
+      - name: Setup Sourceknight
+        uses: SparkyCloudy/sourceknight@master
 
       - name: Build sourcemod plugin
-        working-directory: addons/sourcemod/scripting
         run: |
-          set -euo pipefail
-          mkdir -p ../plugins
-          spcomp -i include -o ../plugins/mapchooser_extended.smx mapchooser_extended.sp
-          spcomp -i include -o ../plugins/nominations_extended.smx nominations_extended.sp
-          spcomp -i include -o ../plugins/rockthevote_extended.smx rockthevote_extended.sp
-          spcomp -i include -o ../plugins/mapchooser_extended_sounds.smx mapchooser_extended_sounds.sp
+          sourceknight build
 
       - name: Create package
         run: |
-          set -euo pipefail
-          mkdir -p /tmp/package/addons/sourcemod/plugins
-          cp addons/sourcemod/plugins/*.smx /tmp/package/addons/sourcemod/plugins/
-          cp -R addons/sourcemod/configs /tmp/package/addons/sourcemod/
-          cp -R addons/sourcemod/translations /tmp/package/addons/sourcemod/
-          mkdir -p /tmp/package/sound
-          cp -R sound/* /tmp/package/sound/
+          mkdir -p /tmp/package
+          cp -R addons /tmp/package/
+          cp -R sound /tmp/package/
 
       - name: Upload build archive for test runners
         uses: actions/upload-artifact@v7
