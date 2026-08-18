@@ -20,6 +20,8 @@ jobs:
 
       - name: Setup Sourceknight
         uses: SparkyCloudy/sourceknight@master
+        with:
+          cache: false
 
       - name: Build sourcemod plugin
         run: |
