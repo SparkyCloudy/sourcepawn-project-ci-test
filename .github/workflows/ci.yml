@@ -23,7 +23,7 @@ jobs:
 
       - name: Build sourcemod plugin
         run: |
-          sourceknight build
+          sourceknight build -j 4
 
       - name: Create package
         run: |
