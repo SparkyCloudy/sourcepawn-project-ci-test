@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Sourceknight
-        uses: SparkyCloudy/sourceknight@v0.5.0
+        uses: SparkyCloudy/sourceknight@master
 
       - name: Build sourcemod plugin
         run: |
