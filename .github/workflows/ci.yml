@@ -37,29 +37,31 @@ jobs:
   tag:
     name: Tag
     needs: build
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
-      - uses: dev-drprasad/delete-tag-and-release@v1.1
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-        with:
-          delete_release: true
-          tag_name: latest
+      - name: Delete existing "latest" release and tag
+        run: |
+          set -euo pipefail
+          gh release delete latest --cleanup-tag --yes || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: rickstaa/action-create-tag@v1
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
         with:
-          tag: "latest"
+          tag: latest
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     name: Release
-    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     needs: [build, tag]
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.tag.result == 'success' || needs.tag.result == 'skipped') &&
+      (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -70,25 +72,25 @@ jobs:
 
       - name: Versioning
         run: |
+          set -euo pipefail
           version="latest"
-          if [[ "${{ github.ref_type }}" == 'tag' ]]; then
-            version=`echo $GITHUB_REF | sed "s/refs\/tags\///"`;
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
           fi
-          echo "RELEASE_VERSION=$version" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Package
         run: |
+          set -euo pipefail
           cd artifacts
-          ls -Rall
-          tar -czf ../${{ github.event.repository.name }}-${{ env.RELEASE_VERSION }}.tar.gz .
+          tar -czf "../${{ github.event.repository.name }}-${{ env.RELEASE_VERSION }}.tar.gz" .
           cd ..
-          ls -la *.tar.gz
 
       - name: Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: '*.tar.gz'
+          file: "*.tar.gz"
           tag: ${{ env.RELEASE_VERSION }}
           file_glob: true
           overwrite: true
